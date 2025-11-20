@@ -134,22 +134,19 @@ export async function runCli(argv: string[]): Promise<void> {
   const resolvedArgs = inference.args;
 
   try {
+    const helpPrinter = getHelpPrinter(resolvedCommand);
+    if (helpPrinter && consumeHelpTokens(resolvedArgs)) {
+      helpPrinter();
+      process.exitCode = 0;
+      return;
+    }
+
     if (resolvedCommand === 'list') {
-      if (consumeHelpTokens(resolvedArgs)) {
-        printListHelp();
-        process.exitCode = 0;
-        return;
-      }
       await handleList(runtime, resolvedArgs);
       return;
     }
 
     if (resolvedCommand === 'call') {
-      if (consumeHelpTokens(resolvedArgs)) {
-        printCallHelp();
-        process.exitCode = 0;
-        return;
-      }
       await runHandleCall(runtime, resolvedArgs);
       return;
     }
@@ -372,6 +369,16 @@ function formatHelpFooter(colorize: boolean): string {
     return `${pointer}\n${autoLoad}`;
   }
   return `${dimText(pointer)}\n${extraDimText(autoLoad)}`;
+}
+
+function getHelpPrinter(command: string): (() => void) | undefined {
+  if (command === 'list') {
+    return printListHelp;
+  }
+  if (command === 'call') {
+    return printCallHelp;
+  }
+  return undefined;
 }
 
 async function printVersion(): Promise<void> {
